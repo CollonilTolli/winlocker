@@ -13,7 +13,7 @@
     "CollonilTolliWinLock",
     "prank"
   ],
-  "author": "Your Name",
+  "author": "Collonil Tolli",
   "license": "MIT",
   "devDependencies": {
     "electron": "^28.0.0",

