@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WinLocker</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="background-overlay"></div>
+    
+    <div class="container">
+        <div class="lock-screen">
+            <div class="lock-icon">
+                <img src="QR.png" alt="QR Code" style="width: 300px; height: 351.65px;">
+            </div>
+            
+            <h1 class="title">Система заблокирована</h1>
+            
+            <p class="message">
+                Твой компьютер заблокирован!<br>
+                Чтобы разблокировать систему, найди пароль.<br>
+                <em>Подсказка: Нужно пройти квест целиком, бот тебе в этом поможет</em>
+            </p>
+            
+            <div class="password-form">
+                <input 
+                    type="text" 
+                    id="passwordInput" 
+                    placeholder="Введите пароль для разблокировки"
+                    autocomplete="off"
+                    spellcheck="false"
+                >
+                <button id="unlockBtn" type="button">Разблокировать</button>
+            </div>
+            
+            <div id="errorMessage" class="error-message" style="display: none;">
+                Неверный пароль! Попробуйте еще раз.
+            </div>
+            
+            <div class="footer">
+                <p>Для получения пароля пройдите квест!</p>
+            </div>
+        </div>
+    </div>
+    
+    <script src="renderer.js"></script>
+</body>
+</html>

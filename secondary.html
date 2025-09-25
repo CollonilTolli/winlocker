@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Система заблокирована</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="lock-screen">
+        <div class="lock-icon">
+            <img src="QR.png" alt="QR Code" style="width: 300px; height: 351.65px;">
+        </div>
+        <h1 class="title">Система заблокирована</h1>
+        <p class="message">Для разблокировки используйте основной монитор</p>
+        <div class="password-container" style="opacity: 0.5; pointer-events: none;">
+            <input type="password" class="password-input" placeholder="Введите пароль..." disabled>
+            <button class="unlock-btn" disabled>Разблокировать</button>
+        </div>
+        <div class="error-message" id="errorMessage"></div>
+    </div>
+    
+    <script src="secondary-renderer.js"></script>
+</body>
+</html>
